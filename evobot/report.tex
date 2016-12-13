@@ -1,0 +1,363 @@
+%% This is file `elsarticle-template-1-num.tex',
+%%
+%% Copyright 2009 Elsevier Ltd
+%%
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%%
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%%
+%% Template article for Elsevier's document class `elsarticle'
+%% with numbered style bibliographic references
+%%
+%% $Id: elsarticle-template-1-num.tex 149 2009-10-08 05:01:15Z rishi $
+%% $URL: http://lenova.river-valley.com/svn/elsbst/trunk/elsarticle-template-1-num.tex $
+%%
+\documentclass[12pt]{elsarticle}
+\usepackage{mathtools}
+\usepackage{subfig}
+
+%% \documentclass[preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn]{elsarticle}
+%% \documentclass[final,3p,times]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn]{elsarticle}
+%% \documentclass[final,5p,times]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn]{elsarticle}
+
+%% The graphicx package provides the includegraphics command.
+\usepackage{graphicx}
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+\usepackage{amsmath}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers after \end{frontmatter}.
+\usepackage{lineno}
+
+%% natbib.sty is loaded by default. However, natbib options can be
+%% provided with \biboptions{...} command. Following options are
+%% valid:
+
+%%   round  -  round parentheses are used (default)
+%%   square -  square brackets are used   [option]
+%%   curly  -  curly braces are used      {option}
+%%   angle  -  angle brackets are used    <option>
+%%   semicolon  -  multiple citations separated by semi-colon
+%%   colon  - same as semicolon, an earlier confusion
+%%   comma  -  separated by comma
+%%   numbers-  selects numerical citations
+%%   super  -  numerical citations as superscripts
+%%   sort   -  sorts multiple citations according to order in ref. list
+%%   sort&compress   -  like sort, but also compresses numerical citations
+%%   compress - compresses without sorting
+%%
+%% \biboptions{comma,round}
+
+% \biboptions{}
+
+\journal{ME769A}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+\title{Reviewing the Evolutionary Approach for Obstacle Avoidance in a Mobile Robot}
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for the associated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for the associated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for the associated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%%
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \address{Address\fnref{label3}}
+%% \fntext[label3]{}
+
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{<author name>}
+%% \address[label1]{<address>}
+%% \address[label2]{<address>}
+
+\author{Gaurav Gupta (11907272/11272)}
+
+\address{Department of Mechanical Engineering, IIT Kanpur}
+
+\begin{abstract}
+%% Text of abstract
+In this paper, the evolution of a recurrent neural network in order to control an autonomous mobile robot is presented. Firstly, an environment containing obstacles is created, a robot embedded with IR sensors and control system is developed. The control architecture evolves in order to avoid the obstacles. The performance of the discussed method is evaluated in different environments and a wide range of system parameters.
+\end{abstract}
+\begin{keyword}
+Autonomous Mobile Robots \sep System Modelling \sep Evolutionary Robotics
+%% keywords here, in the form: keyword \sep keyword
+
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+%% main text
+\section{Introduction}
+\label{S:1}
+
+The basic idea of evolutionary robotics is as follows - the control systems of the initial generations of a robot are encoded in artificial chromosomes and the population is put in an unknown environment. The performances of all such robots are defined by using a fitness score, the robots are allowed to evolve in accordance with these scores - this is essentially an attempt to replicate the biological evolution that gives rise to the survival of the fittest. This operation is repeated for many generations until an individual satisfying some predefined score is obtained or the population converges to a local optimum. The presented study is largely based on the work of Floreano, Nolfi[1] and Mondada [2]. The paper is organized into various sections. In the first section entitled 'System Modelling', the robot-environment development and interaction are discussed, thereafter the 'Control System and its Evolution' are presented. This is followed by 'Results and Discussion'.
+Lastly conlusions are drawn and some of the shortcomings of the method are discussed. 
+
+%\begin{itemize}
+%\item Bullet point one
+%\item Bullet point two
+%\end{itemize}
+
+%\begin{enumerate}
+%\item Numbered list item one
+%\item Numbered list item two
+%\end{enumerate}
+
+\section{System Modelling}
+
+\subsection{Robot: Kinematics}
+
+The robot under consideration is circular in shape embedded with 8 infrared sensors placed symmetrically ,it is a differentially wheeled robot. 
+Motion of such a robot in the 2D plane can be conveniently represented in terms of speed \textbf{v} and direction $\theta$. In terms of the angular velocity of the wheels $\omega_1, \omega_2$, this relationship can be expressed as follows - 
+\begin{equation}
+v = \frac{(\omega_1 + \omega_2)*r_{wheel}}{2}
+\end{equation}
+The change in the direction of the motion of the robot is given by d$\theta$, 
+\begin{equation}
+d\theta = \omega dt
+\end{equation}
+Where,
+\begin{equation}
+\omega = \frac{(\omega_1 - \omega_2)*r_{wheel}}{ W_{robot}}
+\end{equation}
+
+In the above equations \textit{dt} is the time for which the robot persists with the given $\omega_1, \omega_2 ,  r_{wheel}$ is the radius of the robot wheel, 
+$W_{robot}$ is its wheel to wheel distance. (See \textit{Appendix})
+
+\subsection{Robot: Sensors}
+The robot consists of 8 infra-red sensors with a sensor range of 3 times the robot radius placed symmetrically along the robot circumference.  \\
+Sensor readings are generated as a result of the interaction with the obstacles within the specifie sensor range. These readings were understood to be directly proportional to the angle at which the IR rays strike the obstacle and inversely proportional to the between the sensor and obstacle boundary. 
+Taking these two into account, the sensor reading \textit{s} is modelled as follows - 
+\[
+    s = 
+\begin{cases}
+    \frac{cos\theta}{d} & \text{if } 	d\leq s_{range}, -90<\theta <90\\
+    0,              & \text{otherwise}
+\end{cases}
+\]
+In the above formulation, d is the distance of the sensor from the 
+obstacle, $s_{range}$ is the sensor range and $\theta$ is depicted in fig.1
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.5\linewidth]{robo2.jpg}
+\caption{Interaction of sensor and obstacle}
+\end{figure}
+
+In the figure, A is the robot, B is the obstacle. The interaction of a single sensor with a single obstacle is shown. 
+In case a sensor senses more than one obstacle, the largest reading is kept and others are not included.
+
+\section{Control System and its Evolution}
+\subsection{Control System Representation as a Neural Network}
+The control system of the robot was modelled as a neural network with an architecture as shown in fig.2. 
+An artificial neural network is a collection of units connected by weighted links (or connection weights) used to transmit signals. 
+The output of a unit $y_i$ is a function $\phi$ of the sum of incoming signals $x_j$ weighted by connection weight strengths $w_{ij}$. 
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.5\linewidth]{robo3.jpg}
+\caption{Control system of Robot}
+\end{figure}
+
+\begin{equation}
+y_i = \phi(\sum_{j}^{N} w_{ij}x_j)
+\end{equation}
+Where, 
+\begin{equation}
+\phi(\textit{x}) = \frac{1}{1+e^{\textit{-x}}}
+\end{equation}
+The control system used in the study consisted of one layer of synaptic weights from eight infrared proximity sensors to two motors unites. 
+In adition an external bias unit was also attached to each output node, this was made to ensure that wheels have some motion even if the sensory input is zero. 
+A set of recurrent connections was also implemented at the output unit as shown in the figure. 
+The synaptic weight joining the $j^{th}$ input with the $i^{th}$ output is represented as $w_{ij}$. In addition, the bias weights are written as $w_{b1}$ and $w_{b2}$. 
+Finally the recurrent connection weights are depicted as $w_{old1}$ and $w_{old2}$, these connections feed in the speed of the previous timestep in addition to the sensory and bias inputs.  Each out unit was shifted in the range [-0.5,0.5] to account for both positive and negative rotation speeds. 
+
+\subsection{Evolving the synaptic weights}
+Each syaptic weight was encoded into binary and stored in a substring of length of 10 bits giving it a range of [0, 1023]. While decoding, the value was divided by 100 and 5 was subtracted from it giving it an almost symmetric range of [-5,5.23]. Since, a total of 20 synaptic weights represent the control system of a single individual, total length of the chromosome was 200 bits. 
+Each individual's performance was assesed for a total of \textit{count} = 1500 sensory-motor loops, each loop lasting 0.3 seconds. 
+If the individual bumped into an obstacle before 1500 loops a score of 0 was returned otherwise, the following score was reported (a modification of the following function will be discussed later)- 
+\begin{equation}
+\phi = V(1-\sqrt{\Delta v})(1-i_{max})
+\end{equation}
+Where V is the sum of rotation speeds of the two wheels. This component is maximized by high rotation speed of wheels  without regard to their direction of motion.  $\Delta v$ is the absolute value of the algebraic difference between the signed speed of the wheels. It is computed by adding 0.5 to each read value(that makes the range of each wheel speed in [0,1]), subtracting them together and taking the absolute value. Finally $i_{max}$ is the normalized activation value of the infrared sensor with the highest activity and thus 1-$i_{max}$ encourages obstacle avoidance. \\
+The fitness function itself was analyzed and its effects on the robot motion were studied. The generations were evolved with single point crossover and mutation using \textit{pyevolve} library in \textit{Python}. The number of generations was also under consideration and required a seprate analysis.
+\section{Results and Discussions}
+
+A 2-D arena of size 500X500 was created using \textit{Pygame}. The obstacles were placed around strategically to observe various patterns in robot behavior. For every generation of the evolving robot, it always began its motion at the center of the arena. The wheel velocities were assigned an initial value of zero. Robot always faced along the x-axis to begin with i.e. initial conditions were kept same for all iterations. Initial configurations was as depicted in figure 3.
+Further, the fitness scores(of the best individual in the generation) against the number of generations. For various parameters, the trend of the performance score remained very similar to the one shown in Fig.3.
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.5\linewidth]{robo1.jpg}
+\caption{Initial Condition of the Robot}
+\end{figure}
+
+\subsection{Analysis : Number of Generations}
+The effect of number of generations on robot performance by evaluated. The fitness function used for this 
+analysis was as follows - 
+\begin{equation}
+\phi = V(1-\Delta v^{1.5})(1-{i_{max}}^2)|{X_{max}} - {X_0}|
+\end{equation}
+
+In the above function, \textit{V} plays a role similar to the one described in the previous section. 
+${\Delta v}^{1.5}$ was used to ensure that robot in not too penalised for rotation
+about its place. While using $\sqrt{\Delta v}$ it was observed that the robot
+was too hesitant to rotate as it imposed a strong penalty in the range [0,1].
+Similarly, $i_{max}$ was squared to lessen the effect of obstacle. This was 
+done to ensure that robot does not hesitate in coming close to the obstacles.
+Finally, a $4^{th}$ term was added, in this function. $|{X_{max} - X_o}|$ was the
+maximum distance that the robot travelled from its starting position $X_o$ at any point
+of time during its life. This was done to get rid of the back and forth motion that the robot displayed in absence of 
+the term. The table shows some of the parameters for which the study was conducted. 
+'Counts' is the number of sensory-motor loops for which the run was conducted. Fitness score
+represents the value of the fitness function of the best individual after the $n_{th}$ generation.
+Here \textbf{n} is the number of generations for which the trial was conducted
+\begin{table}[h]
+\centering
+\caption{Parameters and Observations}
+\label{my-label}
+\begin{tabular}{|l|l|}
+Fitness Function & $V(1-{\Delta v}^{1.5})(1-{i_{max}}^2)|\textbf{$X_{max} - X_o$}|$         \\
+Counts           & 1500      \\
+Generations      & (5,15,45) \\
+Fitness Score    & (0.32, 0.35, 0.42)         
+\end{tabular}
+\end{table}
+
+The trajectory followed by the best individual after \textbf{n} generations is shown in the fig4.
+
+\begin{figure}[h]
+\centering
+\subfloat[After 5 generations]{\includegraphics[width = 2in]{count1500gen5fnbest}} 
+\subfloat[After 15 generations]{\includegraphics[width = 2in]{count1500gen15fnbest}} 
+\subfloat[After 45 generations]{\includegraphics[width = 2in]{count1500gen45fnbest}}
+\caption{Trajectory of the best individual after 5,15,45 generations}
+\end{figure}
+
+\subsection{Analysis: The Fitness Function}
+For this part of the study, the number of generations was kept constant at 20 and the count was set at 1500.
+The two fitness functions under consideration were described in sections 3.2 and 4.1 respectively. Fitness function introduced in 
+section 3.2($fn^a$) was proposed by [1], it was altered here($fn^b$) for comparison. Fitness scores of the best individual
+after 20 generations and other parameters are available in the table.
+
+\begin{table}[h]
+\centering
+\caption{Parameters and Observations}
+\label{my-label}
+\begin{tabular}{|l|l|}
+Fitness Function & ($V(1-{\Delta v}^{1.5})(1-{i_{max}}^2)|\textbf{$X_{max} - X_o$}|$, $V(1-{\Delta v})(1-{i_{max}})$)  \\
+Counts           & 1500      \\
+Generations      & 20 \\
+Fitness Score    & (0.45, 0.37)         
+\end{tabular}
+\end{table}
+The trajectory followed by the best individual after 20 generations for each of the two functions is shown below - 
+\begin{figure}[h]{}
+\centering
+\subfloat[Using $fn^a$]{\includegraphics[width = 2.5in]{count1500gen20fnbest}} 
+\subfloat[Using $fn^b$]{\includegraphics[width = 2.5in]{count1500gen20fnnormal}} 
+\caption{Trajectory of the robot for $fn^a, fn^b $}
+\end{figure}
+
+
+Clearly, the function described in section 3.2 fails to work here although mathematically, it achieved a fitness score of 0.37 which is comparable with the score
+obtained by $fn^a$. As shown in fig. 5b, the robot starts heading towards the right side, there it senses an obstacle but due to the heavy penalty imposed on it
+by the fitness function, it didn't move forward, nor did it try to rotate because rotation was also severely restricted by the function. On account of this observation,
+it is safe to suggest that $fn^a$ gives better performance if all other parameters are kept same.
+ 
+\subsection{Analysis : Optimization Algorithm}
+For this part of the analysis, the optimization technique to be used for getting the best score from the fitness function was 
+studied. First Genetic Algorithm was used for optmization purpose as described earlier. Overall the algorithm took
+~750 seconds for 50 generations. The fitness score of the best individual in each generation is shown in fig.6
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.7\linewidth]{fitness.jpg}
+\caption{Fitness scores vs Generations}
+\end{figure}
+Among the more conventional techniques, Nelder-Mead method was chosen for its simplicity
+and the convenience of not determining complicated gradients, Jacobians. The algorithm
+was implemented using \textit{scipy.optimize} library in python. However, the algorithm
+was aborted as it had a computation time of 60 minutes + for a tolerance of 0.001. 
+
+\subsection{In an unknown environment}
+As a final part of the analysis, the robot population was developed in an environment with obstacle arrangement
+identical to those in the preceding subsections. The evolved weights of the best individual
+were then tested in an environment it was not accustomed to. The results were promising.
+The trajectory in this unknown environment is shown in fig.7.
+\begin{figure}[h]
+\centering\includegraphics[width=0.7\linewidth]{wow.jpg}
+\caption{Behavior in Unknown Environment}
+\end{figure}
+ 
+\section{Conclusion}
+Over the course of the project, an evolutionary approach for obstacle avoidance purposes
+was studied and implemented. The fitness function defined in the established literature
+was improved to suit the developed model. By varying the fitness function, the number of generations
+and various other parameters, some interesting behavior patterns were observed in the robot. 
+Despite being novel and to an extent effective, the approach has some serious shortcomings. 
+It requires a very rigorous modelling of the sensor environment. It is very difficult to generate
+accurate sensor readings in a simulation. Further, it is a very daunting task to implement
+the approach on physical robots. The complexity will only increase once the focus moves
+on to tasks more difficult than avoiding static obstacles. 
+
+
+\section{References}
+
+\hspace{-0.25in}1. Nolfi, Stefano, and Dario Floreano. "Evolutionary robotics." (2000). \newline{}
+2. Floreano, Dario, and Francesco Mondada. "Evolution of homing navigation in a real mobile robot." Systems, Man, and Cybernetics, Part B: Cybernetics, IEEE Transactions on 26.3 (1996): 396-407.\newline{}
+3. Golberg, David E. "Genetic algorithms in search, optimization, and machine learning." Addion wesley 1989 (1989).\newline{}
+4. Hornik, Kurt, Maxwell Stinchcombe, and Halbert White. "Multilayer feedforward networks are universal approximators." Neural networks 2.5 (1989): 359-366.
+
+\section{Appendix}
+\begin{table}[h]
+\centering
+\caption{Values used thoughout the study}
+\label{my-label}
+\begin{tabular}{|l|l|}
+$r_{robot}$           & 12.5      \\
+$r_{Obstacle}$      & 25 \\
+$r_{wheel}$    & 20 \\
+$sensor_{range}$  & 75 \\
+\textit{dt} & 0.3 \\
+
+
+        
+\end{tabular}
+\end{table}
+
+\end{document}
+
+%%
+%% End of file `elsarticle-template-1-num.tex'.
