@@ -1,9 +1,24 @@
+"""
+Copyright -  2015-2017
+Gaurav Gupta (Now at Univ. of Heidelberg)
+Department of Mechanical Enginering (ME769A)
+Indian Institute of Technology, Kanpur (India)
+"""
+
 import random, pygame, math, numpy, pyevolve
 from pyevolve import G1DBinaryString
 from pyevolve import GSimpleGA
 from pyevolve import Selectors
 from pyevolve import Mutators
+from pyevolve import DBAdapters
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+import time
 
+flag_test = 0
+
+#a flag to do optimization with NM, 0 means GA, 1 means NM
+nm=0
 #all angles to be taken in degrees
 pygame.init()
 
@@ -13,53 +28,50 @@ black = (0,0,0)
 v_max = 10
 t_act = 1
 
-pos_obs = [[315.0 ,325.0] ,[125.0 ,380.0] ,[125.0 ,115.0] ,[320.0 ,105.0] ,[385.0, 195.0], [100,250]]
-#say 500 represents 500cm
+pos_obs = [[315.0 ,325.0] ,[125.0 ,380.0] ,[125.0 ,115.0] ,[320.0 ,105.0] ,[385.0, 195.0],[100,290]]
 quit_flag = 0
 arena_x = 500
 arena_y = 500
-epsilon = arena_x/100		#threshold, one generation ends after coming this close
-flag=0
-dt = 0.1			#seconds after update
+epsilon = arena_x/100				#threshold, one generation ends after coming this close
+flag=0						#quit flag 
+dt = 0.3					#update every 0.3 seconds
 obstacle_radius = float(arena_x)/20;
-robot_radius = float(arena_x)/20;
+robot_radius = float(arena_x)/40;
 sensor_radius = float(robot_radius)/10;
-sensor_range = 3*obstacle_radius		#actual range + obstacle_radius, as we'll later on check with obstacle center only
+sensor_range = 3*obstacle_radius		#i.e. actual range + obstacle_radius, collision will be checked with obstacle center for ease
 iterations = 1
 
+#Initialize pygame for visualization
 gameDisplay = pygame.display.set_mode((arena_x,arena_y))
-
-#0,0 is top left
 pygame.display.set_caption('Arena')
 
 #putting in the obstacles, assumed to be cylindrical, x,y, radius assinged
 class OBSTACLE:
 	def __init__(self, pos):
 
-		self.radius = obstacle_radius;		#robot radius taken same as obstacle radius, arena_x/20
+		self.radius = obstacle_radius;		
 		self.x = pos[0]
 		self.y = pos[1]
-		#self.x = float(arena_x)*(float(random.randrange(20,40))/100 +0.4*random.randrange(0,2))
-		#self.y = float(arena_y)*(float(random.randrange(20,40))/100 +0.4*random.randrange(0,2))
 
 class ROBOT:
+	#Robot is initialized in space, properties etc defined
 	def __init__(self):
 		self.radius = robot_radius;
-		self.x = float(arena_x)/2 #+ 0.9*arena_x*(random.random() -0.5)
-		self.y = float(arena_y)/2 #+ 0.9*arena_y*(random.random() -0.5)
-		self.theta = 0 #360*(random.random())			#initial direction of velocity
+		self.x = float(arena_x)/2 #+ 0.9*arena_x*(random.random() -0.5) 
+		self.y = float(arena_y)/2 #+ 0.9*arena_y*(random.random() -0.5) 
+		self.theta = 0 		 #360*(random.random())			#initial direction of velocity
 		self.ref = self.theta			#the reference marker to estimate the robot orientation
-		self.wheel_radius = 20
-		self.width = robot_radius
+		self.wheel_radius = 20 			#Used to relate rpms to robot motion in x-y-theta form
+		self.width = robot_radius		#distance between the two wheels
 		self.sensor = []
 
+	#Sensor Information at every update
 	def new_sense(self, orient): 
-
 		r = 0.9*self.radius			#sensors placed at 0.9r times the robot radius from the center
-		orient = (orient)%360
+		orient = (orient)%360			#angular position of sensor 
 		x = self.x + r*math.cos(math.radians(orient))
 		y = self.y + r*math.sin(math.radians(orient))
-		val = 0			#sensed value, will depend on robot orientation, sensor orientation, x,y coordinates and obstacle positions
+		val = 0					#sensed value, will depend on robot orientation, sensor orientation, x,y coordinates and obstacle positions
 		temp = [x,y,orient,val]
 		self.sensor.append(temp)
 		return self.sensor
@@ -67,19 +79,23 @@ class ROBOT:
 	def sense_bot(self, obstacles):
 		global quit_flag					
 		for i in range(0,len(self.sensor)):	
-			temp1 = self.sensor[i][2]
-			#print self.ref
-			self.sensor[i][3] = 0		#initialize as zero at every update step
 
+			#orientation of ith sensor
+			temp1 = self.sensor[i][2]
+
+			#sensor value initialized as zero at every update step
+			self.sensor[i][3] = 0		
+
+			#check if any sensor goes out of arena, quit in that case!
 			if self.sensor[i][0]<=epsilon or self.sensor[i][0]>=arena_x-epsilon or self.sensor[i][1]<=epsilon or self.sensor[i][1]>=arena_y-epsilon:
 				quit_flag = 1
 			
+			#The following 4 cases are for computing sensor values due to the boundaries of the arena
 			if self.sensor[i][0]<=sensor_range and self.sensor[i][2]>=90 and self.sensor[i][2]<=270:
 				self.sensor[i][3] = self.sensor[i][3] + epsilon*abs(math.cos(math.radians(self.sensor[i][2])))**2/self.sensor[i][0]
-				#print self.sensor[i][0], sensor_range, obstacle_radius
+
 			if self.sensor[i][0]>=arena_x -sensor_range  and (self.sensor[i][2]>=270 or self.sensor[i][2]<=90):
 				self.sensor[i][3] = self.sensor[i][3] + epsilon*abs(math.cos(math.radians(self.sensor[i][2])))**2/(arena_x -self.sensor[i][0])	
-				#print self.sensor[i][0], arena_x - (sensor_range - obstacle_radius)
 
 			if self.sensor[i][1]<=sensor_range and self.sensor[i][2]>=180 and self.sensor[i][2]<=360:
 				self.sensor[i][3] = self.sensor[i][3] + epsilon*abs(math.sin(math.radians(self.sensor[i][2])))**2/self.sensor[i][1]
@@ -87,23 +103,24 @@ class ROBOT:
 			if self.sensor[i][1]>=arena_y - sensor_range and self.sensor[i][2]>=0 and self.sensor[i][2]<=180:
 				self.sensor[i][3] = self.sensor[i][3] + epsilon*abs(math.sin(math.radians(self.sensor[i][2])))**2/(arena_y -self.sensor[i][1])	
 				
+
+			#To check for sensor readings due to obstacles within the arena confinement
 			for j in range(len(obstacles)):			
 				if (self.x-obstacles[j].x)**2 + (self.y-obstacles[j].y)**2 <= (self.radius+obstacles[j].radius+epsilon)**2:
 					quit_flag = 1
-				#print (self.x-obstacles[j].x)**2 + (self.y-obstacles[j].y)**2, (self.radius+obstacles[j].radius+epsilon)**2, quit_flag	
 				temp2 = (math.degrees(math.atan2(obs[j].y-self.sensor[i][1],obs[j].x-self.sensor[i][0]))+2*360)%360
 				temp3 = math.sqrt((self.sensor[i][0]-obstacles[j].x)**2 + (self.sensor[i][1]-obstacles[j].y)**2)  
 				
-				#print i,temp1,temp2, temp3, sensor_range**2
-				#if (temp3 <= sensor_range**2 and (abs(temp1-temp2)<=90 or ((temp1>=270 or temp2>270) and (temp2>(temp1-90)%360 or temp2<=(temp1+90)%360)))):
 				if temp3 <= sensor_range+obstacle_radius:
 					if (temp1>=270 and ((temp2>=temp1-90 and temp2<=360) or temp2<= (temp1+90)%360)) or (temp2>=270 and ((temp1>=temp2-90 and temp1<=360) or temp1<= (temp2+90)%360)) or (abs(temp1-temp2) <=90):
-						self.sensor[i][3] = self.sensor[i][3]+ epsilon*abs(math.cos(math.radians(temp1-temp2))/(abs(temp3-obstacles[j].radius)))
+						if epsilon*abs(math.cos(math.radians(temp1-temp2))/(abs(temp3-obstacles[j].radius))) > self.sensor[i][3]:
+							self.sensor[i][3] = epsilon*abs(math.cos(math.radians(temp1-temp2))/(abs(temp3-obstacles[j].radius)))
 								
 						#quit one generation when sensor is (or the 'epsilon') 5 cm away from the obstacle i.e. temp3-obstacle_radius
 						#above fact is to be used in normalization of sensor readings, all reading to be multiplied with 5 as max reading is 1/5.
 						#print  math.sqrt(temp3)-obstacles[j].radius, epsilon
     	
+    		#sensor values returned
     		return [self.sensor[p][3] for p in range(8)]
 
    	def move_bot(self, sensor_values,params):
@@ -113,11 +130,18 @@ class ROBOT:
 		out1 = sigmoid(numpy.dot(numpy.array((input1)), numpy.array((params[0])))) - 0.5
 		out2 = sigmoid(numpy.dot(numpy.array((input2)), numpy.array((params[1])))) - 0.5
 
-		omega = (out1-out2)*self.wheel_radius/self.width	#rotation of the robot body
-		vel = (out1+out2)*self.wheel_radius/2 			#velocity of robot com
+		#rotation of the robot body, angular velocity
+		omega = (out1-out2)*self.wheel_radius/self.width	
+
+		#velocity of robot com
+		vel = (out1+out2)*self.wheel_radius/2 			
 		dtheta = omega*dt
 		#print out1,out2,vel,dtheta
-   		r = 0.9*self.radius			#sensors placed at 0.9r times the robot radius from the center
+
+		#sensors placed at 0.9r times the robot radius from the center
+   		r = 0.9*self.radius			
+
+   		#update of sensor positions in global frame
 		self.theta = (self.theta + dtheta)%360
 		self.x = self.x + vel*dt*math.cos(math.radians(self.theta))
 		self.y = self.y + vel*dt*math.sin(math.radians(self.theta))
@@ -134,6 +158,7 @@ class ROBOT:
 		return [out1,out2]
 
 
+#sigmoidal function
 def sigmoid(sig_in):
 	if sig_in < -50:
 		return 0
@@ -157,6 +182,7 @@ for n in range(len(pos_obs)):
 
 fin_para = 0
 
+#converts binary results of GA to decimal format
 def dec_params(chromosome, len_sub):
 	par = []
 	for i in range(len(chromosome)/len_sub):
@@ -169,10 +195,10 @@ def dec_params(chromosome, len_sub):
 	par = [par1,par2]	
 	return par
 		
-
-#sort this eval function out!!!!!!!!!!!!!!!!! math range error in sigmoid, while lopp are the major concerns
-
+#returns the fitness score for 1500 updates/collision, whichever happens first
 def eval_func(chromosome):
+	botx = []
+	boty = []
 	global quit_flag, fin_para
 	quit_flag=0
 	score = float(0.0)
@@ -183,10 +209,8 @@ def eval_func(chromosome):
 	robo = create_bot()
 	params = dec_params(chromosome,10)
 	fin_para = params
-	while count<=1000:
+	while count<=1500:
 		count = count+1
-		#if count>1:
-		#	print count.174590032922
 		vals = robo.sense_bot(obs)
 		#print quit_flag, vals
 		if quit_flag==1:
@@ -194,18 +218,65 @@ def eval_func(chromosome):
 			break
 
 		i_max = i_max + max(vals)
+		if max(vals)>=1:
+			print max(vals)
 		w = robo.move_bot(vals,params)
+		botx.append(robo.x)
+		boty.append(robo.y)
 		#print w, vals
-		V = V + abs(w[0]+w[1])
-		v = v + abs(w[0]-w[1])
+		V = V + abs(w[0])+abs(w[1])
+		w0t1 = w[0] + 0.5
+		w0t2 = w[1] + 0.5
+		v = v + abs(w0t1-w0t2)
 	i_max = i_max/count
 	v = v/count
 	V = V/count
-	score = float(V*(1-math.sqrt(v))*i_max)*count 
+	score = float(V*(1-(math.sqrt(v))**2)*(1-i_max**2)*math.sqrt((max(botx)-250)**2 + (max(boty)-250)**2)/math.sqrt(250**2+250**2))
+	return score		
+
+def neldermead(chromosome):
+	botx = []
+	boty = []
+	global quit_flag, fin_para
+	quit_flag=0
+	score = float(0.0)
+	count = 0
+	i_max = 0
+	V = 0
+	v = 0
+	robo = create_bot()
+	params = [chromosome[0:len(chromosome)/2], chromosome[len(chromosome)/2:]]
+	fin_para = params
+	while count<=1500:
+		vals = robo.sense_bot(obs)
+		if quit_flag==1:
+			return 0
+			break
+
+		i_max = i_max + max(vals)
+		if max(vals)>=1:
+			print max(vals)
+		w = robo.move_bot(vals,params)
+		botx.append(robo.x)
+		boty.append(robo.y)
+		#print w, vals
+		V = V + abs(w[0])+abs(w[1])
+		w0t1 = w[0] + 0.5
+		w0t2 = w[1] + 0.5
+		v = v + abs(w0t1-w0t2)
+	i_max = i_max/count
+	v = v/count
+	V = V/count
+	score = 5.0 - float(V*(1-(math.sqrt(v))**2)*(1-i_max**2)*math.sqrt((max(botx)-250)**2 + (max(boty)-250)**2)/math.sqrt(250**2+250**2))
 	return score		
 
 
+#parameters of NN that decide the behavior of bot
+writable_params = 0
+
+#GA based optimization
 def ga_bot():
+	global writable_params
 # Genome instance
 	genome = G1DBinaryString.G1DBinaryString(200)
 
@@ -216,54 +287,55 @@ def ga_bot():
 	# Genetic Algorithm Instance
 	ga = GSimpleGA.GSimpleGA(genome)
 	ga.selector.set(Selectors.GTournamentSelector)
-	ga.setGenerations(50)
+	ga.setGenerations(25)
 	# Do the evolution, with stats dump
 	# frequency of 10 generations
-	ga.evolve(freq_stats=1)
-
+	xyz = ga.evolve(freq_stats=1)
+	print xyz
 	# Best individual
 	best = ga.bestIndividual()
+	writable_params = best
 	print best
+	#sqlite_adapter = DBAdapters.DBSQLite(identify="ex1")
+	#ga.setDBAdapter(sqlite_adapter)
+	#pyevolve_graph.py -i ex1 -1
 
-ga_bot()
 
-#chrome = [random.randrange(1,2) for _ in range(200)]
-#eval_func(chrome)
-#eval_func(chrome)
-#	while flag<1:
-#		b = OBSTACLE()
-#		if (b.x-robo.x)**2 + (b.y-robo.y)**2 >= (robot_radius + obstacle_radius)**2:
-#			obs.append(b)
-#			flag = flag+1
-#			print b.x,b.y
-#	count =1
+def nm_bot(guess):
+	res = minimize(neldermead, guess, method='nelder-mead',
+	                options={'xtol': 1e-1, 'disp': True})
+	print res
+	writable_params = res
 
-	#4 obstacles being setup pseudo-randomly in the arena
-#	while count<5:
-#		flag=0
-#		a = OBSTACLE()
-		#following code ensures the obstacles do not overlap
-#		for j in range(len(obs)):
-#			if (a.x-obs[j].x)**2 + (a.y-obs[j].y)**2 >= (4*obstacle_radius)**2 and (a.x-robo.x)**2 + (a.y-robo.y)**2 >= (2*robot_radius+2*obstacle_radius)**2:
-#				flag = flag+1
-#		if flag==len(obs):
-#			obs.append(a)
-#			print a.x,a.y
-#			count = count + 1
+ig = numpy.array([0]*20)
+if flag_test==0:	
+	if nm==0:
+		ga_bot()
+		writable_params =dec_params(writable_params,10)
+	else:
+		tic = time.time()
+		nm_bot(ig)
+		toc = time.time()
+		print toc,tic
 
 count1 = 0	
 quit_flag=0
 robo = create_bot()
+plot_data = []
 
 for n in range(iterations):		
 	gameEXIT = False
 
-	while not gameEXIT and (quit_flag==0 and count1<=500):	
-		count1 = count1 + 1
+	while not gameEXIT and (quit_flag==0 and count1<=1500):	
 		sensor_values = [robo.sensor[p][3] for p in range(8)]
 			
 		vals = robo.sense_bot(obs)
-		robo.move_bot(vals,fin_para)
+		if flag_test==0:
+			speeds = robo.move_bot(vals, writable_params)#[[0 for _ in range(10)],[1 for _ in range(10)]])#fin_para)
+		else:	
+			speeds = robo.move_bot(vals, [[0 for _ in range(10)],[1 for _ in range(10)]])#)#fin_para)
+		
+		plot_data.append([robo.x, robo.y]) 
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -291,9 +363,32 @@ for n in range(iterations):
 			
 		for i in range(0,len(obs)):
 			pygame.draw.circle(gameDisplay, (250,0,0), (int(obs[i].x), int(obs[i].y)), int(obs[i].radius), 0) 
-		pygame.draw.circle(gameDisplay, (0,255,0), (int(obs[0].x), int(obs[0].y)), int(obs[0].radius), 0) 
+		#pygame.draw.circle(gameDisplay, (0,255,0), (int(obs[0].x), int(obs[0].y)), int(obs[0].radius), 0) 
 		pygame.time.delay(100)			#updated every milisecond
 		pygame.display.update()
+		count1 = count1 + 1
+
+print writable_params
 	
+
+#THIS IS WHERE PLOTS ARE MADE
+
+circles = []
+point_circles = []
+fig = plt.gcf()
+ax = plt.gca()
+ax.cla() # clear things for fresh plot
+# change default range so that new circles will work
+ax.set_xlim((0,arena_x))
+ax.set_ylim((0,arena_y))
+for i in range(len(pos_obs)):
+	circles.append(plt.Circle((pos_obs[i][0], arena_y - pos_obs[i][1]),obstacle_radius,color='r'))
+	fig.gca().add_artist(circles[i])
+fig.gca().add_artist(plt.Circle((arena_x/2, arena_y/2),5,color='g'))
+for i in range(len(plot_data)):
+	point_circles.append(plt.Circle((plot_data[i][0], arena_y - plot_data[i][1]),1,color='b'))
+	fig.gca().add_artist(point_circles[i])
+fig.savefig('plotcircles2.jpg')
+
 pygame.quit()
 quit()
